@@ -1,0 +1,60 @@
+name: Restaurant Reservation Monitor
+
+on:
+  schedule:
+    # GitHub's cron minimum is every 5 min. We poll 3 times per run with a
+    # 2-min sleep between (LOOP_COUNT / LOOP_INTERVAL_SEC below) to get
+    # ~2-min effective polling without fighting the cron limit.
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Skip SMS sending (true/false)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: reservation-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run monitor
+        env:
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_FROM: ${{ secrets.TWILIO_FROM }}
+          NOTIFY_TO: ${{ secrets.NOTIFY_TO }}
+          DRY_RUN: ${{ inputs.dry_run == 'true' && '1' || '0' }}
+          # 3 polls × 2-min interval = ~2-min effective polling per 5-min cron
+          LOOP_COUNT: '3'
+          LOOP_INTERVAL_SEC: '120'
+        run: python -m src.main
+
+      - name: Commit state if changed
+        run: |
+          if [[ -n "$(git status --porcelain state.json)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add state.json
+            git commit -m "Update alert state [skip ci]"
+            git push
+          else
+            echo "No state changes."
+          fi
