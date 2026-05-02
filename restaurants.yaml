@@ -1,0 +1,56 @@
+# Restaurant reservation monitor config.
+# Each entry under `watches` describes one (restaurant, date, time-window) you
+# want monitored. When a slot inside the window opens, you get an SMS with a
+# tap-to-book link.
+#
+# Supported platforms: resy, opentable, tock, yelp, wisely
+# `date` accepts: YYYY-MM-DD, "today", or "tomorrow"
+# `time_window` is [earliest, latest] in 24h "HH:MM" format
+
+watches:
+  # ---- example: Din Tai Fung on Resy ----
+  - name: "Din Tai Fung — Century City"
+    platform: resy
+    venue_id: "REPLACE_ME"          # numeric Resy venue id (see README)
+    venue_slug: "din-tai-fung"      # used to build booking link
+    city_code: "la"                 # used to build booking link
+    party_size: 2
+    date: "tomorrow"
+    time_window: ["18:00", "18:45"]
+
+  # ---- example: Yelp Reservations ----
+  # - name: "Din Tai Fung — Glendale (Yelp)"
+  #   platform: yelp
+  #   venue_id: "din-tai-fung-glendale-2"  # the slug from the Yelp reservation URL
+  #   party_size: 2
+  #   date: "tomorrow"
+  #   time_window: ["18:00", "18:45"]
+
+  # ---- example: OpenTable ----
+  # - name: "Carbone — NYC"
+  #   platform: opentable
+  #   venue_id: "1838"              # numeric OpenTable rid
+  #   party_size: 2
+  #   date: "2026-05-15"
+  #   time_window: ["19:00", "20:30"]
+
+  # ---- example: Tock ----
+  # - name: "Single Thread"
+  #   platform: tock
+  #   venue_id: "single-thread"     # the slug in the Tock URL
+  #   party_size: 2
+  #   date: "2026-06-01"
+  #   time_window: ["18:00", "20:00"]
+
+  # ---- example: Wisely / Olo Engage (per-restaurant URL needed) ----
+  # See README → "Wisely setup" for how to find the availability_url for
+  # your specific restaurant by inspecting its booking widget.
+  # - name: "Some Restaurant on Wisely"
+  #   platform: wisely
+  #   venue_id: "12345"
+  #   party_size: 2
+  #   date: "2026-05-10"
+  #   time_window: ["19:00", "20:00"]
+  #   availability_url: "https://book.example.com/api/v1/availability/{venue_id}?date={date}&size={party_size}"
+  #   availability_method: "GET"   # or POST — see README
+  #   reservation_page_url: "https://www.example.com/reservations"
